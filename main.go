@@ -1,40 +1,45 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	handlerV1 "ginAPI/internal/api/v1/handler"
+	handlerV2 "ginAPI/internal/api/v2/handler"
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
 
 	r := gin.Default()
-	r.GET("/demo", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.GET("/users", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"data": []string{"Alice", "Bob", "Charlie"},
-		})
-	})
-	r.GET("/users/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		c.JSON(200, gin.H{
-			"id":   id,
-			"data": []string{"Alice", "Bob", "Charlie"},
-		})
-	})
-	r.GET("/products", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"data": []string{"Laptop", "Smartphone", "Tablet"},
-		})
-	})
-	r.GET("/products/:id", func(c *gin.Context) {
-		id := c.Param("id")
-		price := c.Query("price")
-		c.JSON(200, gin.H{
-			"id":    id,
-			"price": price,
-			"data":  []string{"Laptop", "Smartphone", "Tablet"},
-		})
-	})
+
+	//verrsion 1
+	v1 := r.Group("/api/v1")
+	{
+		userHandlerV1 := handlerV1.NewUserHandler()
+		productHandler := handlerV1.NewProductHandler()
+		//user
+		v1.GET("/users", userHandlerV1.GetUsersV1)
+		v1.GET("/users/:id", userHandlerV1.GetUsersByIdV1)
+		v1.POST("/users", userHandlerV1.PostUsers)
+		v1.PUT("/users/:id", userHandlerV1.PutUsers)
+		v1.DELETE("/users/:id", userHandlerV1.DeleteUsers)
+		// product
+		v1.GET("/products", productHandler.GetProductsV1)
+		v1.GET("/products/:id", productHandler.GetProductsByIdV1)
+		v1.POST("/products", productHandler.PostProducts)
+		v1.PUT("/products/:id", productHandler.PutProducts)
+		v1.DELETE("/products/:id", productHandler.DeleteProducts)
+	}
+
+	//verrsion 2
+	v2 := r.Group("/api/v2")
+	{
+		userHandlerV2 := handlerV2.NewUserHandler()
+		//user
+		v2.GET("/users", userHandlerV2.GetUsersV2)
+		v2.GET("/users/:id", userHandlerV2.GetUsersByIdV2)
+		v2.POST("/users", userHandlerV2.PostUsers)
+		v2.PUT("/users/:id", userHandlerV2.PutUsers)
+		v2.DELETE("/users/:id", userHandlerV2.DeleteUsers)
+	}
+
 	r.Run(":8080") // listen and serve on
 }
