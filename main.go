@@ -18,6 +18,8 @@ func main() {
 		//user
 		v1.GET("/users", userHandlerV1.GetUsersV1)
 		v1.GET("/users/:id", userHandlerV1.GetUsersByIdV1)
+		v1.GET("/users/admin/:uid", userHandlerV1.GetUsersByUidV1)
+		v1.GET("/users/admintest/:slug", userHandlerV1.GetUsersBySlugV1)
 		v1.POST("/users", userHandlerV1.PostUsers)
 		v1.PUT("/users/:id", userHandlerV1.PutUsers)
 		v1.DELETE("/users/:id", userHandlerV1.DeleteUsers)
@@ -27,6 +29,9 @@ func main() {
 		v1.POST("/products", productHandler.PostProducts)
 		v1.PUT("/products/:id", productHandler.PutProducts)
 		v1.DELETE("/products/:id", productHandler.DeleteProducts)
+		// category
+		categoryHandlerV1 := handlerV1.NewCategoryHandler()
+		v1.GET("/category/:category", categoryHandlerV1.GetCategoriesV1)
 	}
 
 	//verrsion 2
@@ -39,6 +44,7 @@ func main() {
 		v2.POST("/users", userHandlerV2.PostUsers)
 		v2.PUT("/users/:id", userHandlerV2.PutUsers)
 		v2.DELETE("/users/:id", userHandlerV2.DeleteUsers)
+
 	}
 
 	r.Run(":8080") // listen and serve on
