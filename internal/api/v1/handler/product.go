@@ -1,6 +1,7 @@
 package handlerV1
 
 import (
+	"ginAPI/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"regexp"
@@ -17,21 +18,22 @@ func NewProductHandler() *ProductHandler {
 func (u *ProductHandler) GetProductsV1(c *gin.Context) {
 	search := c.Query("search")
 	limitStr := c.DefaultQuery("limit", "10")
-	if search == "" {
+
+	if err := utils.ValidationRequied("Search", search); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "bat buoc phai nhap ",
+			"message": err.Error(),
 		})
 		return
 	}
-	if len(search) < 3 || len(search) > 50 {
+	if err := utils.ValidationStringLength("Search", search, 3, 50); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "search must be between 3 and 50 characters",
+			"message": err.Error(),
 		})
 		return
 	}
-	if !searchRegex.MatchString(search) {
+	if err := utils.ValidationRegex("Search", search, "chỉ chứa kí tự,số và khoảng trắng", searchRegex); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "search chỉ cong chứa chữ cái, số và khoảng trắng",
+			"message": err.Error(),
 		})
 		return
 	}

@@ -1,6 +1,10 @@
 package handlerV1
 
-import "github.com/gin-gonic/gin"
+import (
+	"ginAPI/utils"
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
 
 type CategoryHandler struct{}
 
@@ -16,12 +20,14 @@ func NewCategoryHandler() *CategoryHandler {
 
 func (cg *CategoryHandler) GetCategoriesV1(c *gin.Context) {
 	category := c.Param("category")
-	if validCategory[category] == false {
-		c.JSON(400, gin.H{
-			"error": "Invalid category",
+	// Check if the category is valid
+	if err := utils.ValidationInList("Category", category, validCategory); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
+
 	c.JSON(200, gin.H{
 		"message":  "List all categories V1",
 		"category": category,

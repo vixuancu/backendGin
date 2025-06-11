@@ -1,11 +1,10 @@
 package handlerV1
 
 import (
+	"ginAPI/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 	"regexp"
-	"strconv"
 )
 
 type UserHandler struct{}
@@ -23,19 +22,14 @@ func (u *UserHandler) GetUsersV1(c *gin.Context) {
 func (u *UserHandler) GetUsersByIdV1(c *gin.Context) {
 
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr) // Convert string to int
+	id, err := utils.ValidationPositiveInteger("ID", idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user ID",
+			"error": err.Error(),
 		})
 		return
 	}
-	if id <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID của người dùng phải là số nguyên dương",
-		})
-		return
-	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Get user by ID V1",
 		"id":      id,
@@ -44,10 +38,11 @@ func (u *UserHandler) GetUsersByIdV1(c *gin.Context) {
 func (u *UserHandler) GetUsersByUidV1(c *gin.Context) {
 
 	uid := c.Param("uid")
-	uuid, err := uuid.Parse(uid)
+	// Validate UUID
+	uuid, err := utils.ValidationUUID("UUID", uid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user UUID",
+			"error": err.Error(),
 		})
 		return
 	}
@@ -60,9 +55,9 @@ func (u *UserHandler) GetUsersBySlugV1(c *gin.Context) {
 
 	slug := c.Param("slug")
 	// slug chỉ được phép chứa chữ cái, số và dấu gạch ngang hoặc dấu .
-	if !slugRegex.MatchString(slug) {
+	if err := utils.ValidationRegex("Slug", slug, "chỉ được phép chứa chữ cái, số và dấu gạch ngang hoặc dấu .", slugRegex); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid user slug",
+			"message": err.Error(),
 		})
 		return
 	}
