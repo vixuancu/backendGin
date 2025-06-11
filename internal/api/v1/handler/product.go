@@ -5,10 +5,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"regexp"
-	"strconv"
+	"time"
 )
 
 type ProductHandler struct{}
+type GetProductsBySlugV1Params struct {
+	Slug string `uri:"slug" binding:"slug,min=3,max=50"` // Slug must be a string with length between 3 and 50 characters
+}
+type GetProductsV1Params struct {
+	Search string `form:"search" binding:"required,min=3,max=50,search"`
+	Limit  int    `form:"limit" binding:"omitempty,gte=1,lte=100"`
+	Email  string `form:"email" binding:"omitempty,email"`
+	Date   string `form:"date" binding:"omitempty,datetime=2006-01-02"`
+}
 
 var searchRegex = regexp.MustCompile(`^[a-zA-Z0-9\s]+$`)
 
@@ -16,45 +25,37 @@ func NewProductHandler() *ProductHandler {
 	return &ProductHandler{}
 }
 func (u *ProductHandler) GetProductsV1(c *gin.Context) {
-	search := c.Query("search")
-	limitStr := c.DefaultQuery("limit", "10")
-
-	if err := utils.ValidationRequied("Search", search); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+	var params GetProductsV1Params
+	if err := c.ShouldBindQuery(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
 		return
 	}
-	if err := utils.ValidationStringLength("Search", search, 3, 50); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
+	if params.Limit == 0 {
+		params.Limit = 10 // Set default limit if not provided
 	}
-	if err := utils.ValidationRegex("Search", search, "chỉ chứa kí tự,số và khoảng trắng", searchRegex); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
-		return
+	if params.Email == "" {
+		params.Email = "vixuancu2004@gmail.com"
 	}
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "limit must be a positive integer",
-		})
-		return
+	if params.Date == "" {
+		params.Date = time.Now().Format("2006-01-02") // Set default date if not provided
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "List all products V1",
-		"search":  search,
-		"limit":   limit,
+		"search":  params.Search,
+		"limit":   params.Limit,
+		"email":   params.Email,
+		"date":    params.Date,
 	})
 }
-func (u *ProductHandler) GetProductsByIdV1(c *gin.Context) {
-	id := c.Param("id")
+func (u *ProductHandler) GetProductsBySlugV1(c *gin.Context) {
+	var params GetProductsBySlugV1Params
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Get product by ID V1",
-		"id":      id,
+		"slug":    params.Slug,
 	})
 }
 func (u *ProductHandler) PostProducts(c *gin.Context) {

@@ -7,11 +7,8 @@ import (
 )
 
 type CategoryHandler struct{}
-
-var validCategory = map[string]bool{
-	"php":        true,
-	"javascript": true,
-	"golang":     true,
+type GetCategoriesV1Params struct {
+	Category string `uri:"category" binding:"required,oneof=php javascript golang"` // Category must be one of the valid categories
 }
 
 func NewCategoryHandler() *CategoryHandler {
@@ -19,17 +16,14 @@ func NewCategoryHandler() *CategoryHandler {
 }
 
 func (cg *CategoryHandler) GetCategoriesV1(c *gin.Context) {
-	category := c.Param("category")
-	// Check if the category is valid
-	if err := utils.ValidationInList("Category", category, validCategory); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetCategoriesV1Params
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
 		return
 	}
 
 	c.JSON(200, gin.H{
 		"message":  "List all categories V1",
-		"category": category,
+		"category": params.Category,
 	})
 }

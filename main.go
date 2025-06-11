@@ -3,13 +3,16 @@ package main
 import (
 	handlerV1 "ginAPI/internal/api/v1/handler"
 	handlerV2 "ginAPI/internal/api/v2/handler"
+	"ginAPI/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 
 	r := gin.Default()
-
+	if err := utils.RegisterValidators(); err != nil {
+		panic("Failed to register custom validators: " + err.Error()) // stop the server if validators cannot be registered
+	}
 	//verrsion 1
 	v1 := r.Group("/api/v1")
 	{
@@ -25,7 +28,7 @@ func main() {
 		v1.DELETE("/users/:id", userHandlerV1.DeleteUsers)
 		// product
 		v1.GET("/products", productHandler.GetProductsV1)
-		v1.GET("/products/:id", productHandler.GetProductsByIdV1)
+		v1.GET("/products/:slug", productHandler.GetProductsBySlugV1)
 		v1.POST("/products", productHandler.PostProducts)
 		v1.PUT("/products/:id", productHandler.PutProducts)
 		v1.DELETE("/products/:id", productHandler.DeleteProducts)
