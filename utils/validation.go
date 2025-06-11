@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"regexp"
 	"strconv"
@@ -57,4 +59,21 @@ func keys(m map[string]bool) []string {
 		keys = append(keys, k)
 	}
 	return keys
+}
+func HandleValidationError(err error) gin.H {
+	if validation, ok := err.(validator.ValidationErrors); ok {
+		errors := make(map[string]string)
+		for _, e := range validation {
+			switch e.Tag() {
+			case "gt":
+				errors[e.Field()] = fmt.Sprintf("%s phải lớn hơn %s", e.Field(), e.Param())
+			case "uuid":
+				errors[e.Field()] = fmt.Sprintf("%s phải là một UUID hợp lệ", e.Field())
+			}
+		}
+		return gin.H{"error": errors}
+	}
+	return gin.H{
+		"error": "Validation failed- yêu cầu không hợp lệ " + err.Error(),
+	}
 }

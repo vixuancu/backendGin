@@ -8,6 +8,12 @@ import (
 )
 
 type UserHandler struct{}
+type GetUsersByIdV1Params struct {
+	Id int `uri:"id" binding:"required,gt=0"` // ID must be a positive integer
+}
+type GetUsersByUidV1Params struct {
+	Uid string `uri:"uid" binding:"required,uuid"` // UUID must be a valid UUID
+}
 
 var slugRegex = regexp.MustCompile("^[a-z0-9]+(?:[-.][a-z0-9]+)*$")
 
@@ -21,34 +27,28 @@ func (u *UserHandler) GetUsersV1(c *gin.Context) {
 }
 func (u *UserHandler) GetUsersByIdV1(c *gin.Context) {
 
-	idStr := c.Param("id")
-	id, err := utils.ValidationPositiveInteger("ID", idStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetUsersByIdV1Params
+
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
+
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Get user by ID V1",
-		"id":      id,
+		"id":      params.Id,
 	})
 }
 func (u *UserHandler) GetUsersByUidV1(c *gin.Context) {
 
-	uid := c.Param("uid")
-	// Validate UUID
-	uuid, err := utils.ValidationUUID("UUID", uid)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+	var params GetUsersByUidV1Params
+	if err := c.ShouldBindUri(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Get user by ID V1",
-		"uuid":    uuid,
+		"uuid":    params.Uid,
 	})
 }
 func (u *UserHandler) GetUsersBySlugV1(c *gin.Context) {
