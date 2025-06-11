@@ -32,6 +32,16 @@ func main() {
 		// category
 		categoryHandlerV1 := handlerV1.NewCategoryHandler()
 		v1.GET("/category/:category", categoryHandlerV1.GetCategoriesV1)
+
+		// new
+
+		news := v1.Group("/news")
+		{
+			newsHandlerV1 := handlerV1.NewNewsHandler()
+			news.GET("/:slug", newsHandlerV1.GetNewsV1)
+			news.GET("/", newsHandlerV1.GetNewsV1)
+		}
+
 	}
 
 	//verrsion 2
