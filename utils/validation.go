@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -60,6 +61,9 @@ func HandleValidationError(err error) gin.H {
 				errors[e.Field()] = fmt.Sprintf("Trường %s phải đúng định dạng", e.Field())
 			case "datetime":
 				errors[e.Field()] = fmt.Sprintf("Trường %s phải đúng định dạng YYYY-MM-DD", e.Field())
+			case "file_ext":
+				allowdValues := strings.Join(strings.Split(e.Param(), " "), ",")
+				errors[e.Field()] = fmt.Sprintf("Trường %s phải có phần mở rộng thuộc %s", e.Field(), allowdValues)
 			}
 		}
 		return gin.H{"error": errors}
@@ -82,6 +86,22 @@ func RegisterValidators() error {
 	v.RegisterValidation("search", func(fl validator.FieldLevel) bool {
 		value := fl.Field().String()
 		return searchRegex.MatchString(value)
+	})
+	// file extension jpg , mp4, png, jpeg
+	v.RegisterValidation("file_ext", func(fl validator.FieldLevel) bool {
+		fileName := fl.Field().String() // lấy giá trị từ trường
+		allowedStr := fl.Param()        // lấy tham số từ tag binding
+		if allowedStr == "" {
+			return false
+		}
+		allowedExt := strings.Fields(allowedStr)
+		ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(fileName)), ".") // lấy phần mở rộng của tệp
+		for _, allowd := range allowedExt {
+			if ext == strings.ToLower(allowd) {
+				return true
+			}
+		}
+		return false
 	})
 	return nil
 }

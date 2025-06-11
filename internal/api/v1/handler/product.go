@@ -18,6 +18,17 @@ type GetProductsV1Params struct {
 	Email  string `form:"email" binding:"omitempty,email"`
 	Date   string `form:"date" binding:"omitempty,datetime=2006-01-02"`
 }
+type PostProductsParams struct {
+	Name    string        `json:"name" binding:"required,min=2,max=50"`
+	Price   int           `json:"price" binding:"required,gte=0,lte=1000000"` // Price must be a non-negative integer
+	Display *bool         `json:"display" binding:"omitempty"`                // Display must be true or false
+	Image   ProductsImage `json:"image" binding:"required"`                   // dive dùng để validate các trường bên trong struct
+}
+
+type ProductsImage struct {
+	ImageName string `json:"image_name" binding:"required"`
+	ImgaeLink string `json:"image_link" binding:"required,file_ext=jpg png gif"` // ImageLink must be a valid URL
+}
 
 var searchRegex = regexp.MustCompile(`^[a-zA-Z0-9\s]+$`)
 
@@ -59,8 +70,21 @@ func (u *ProductHandler) GetProductsBySlugV1(c *gin.Context) {
 	})
 }
 func (u *ProductHandler) PostProducts(c *gin.Context) {
+	var params PostProductsParams
+	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
+		return
+	}
+	if params.Display == nil {
+		defaultDisplay := true // Set default value for Display if not provided
+		params.Display = &defaultDisplay
+	}
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "create a new product V1",
+		"data":    params.Name,
+		"price":   params.Price,
+		"display": params.Display,
+		"image":   params.Image,
 	})
 }
 func (u *ProductHandler) PutProducts(c *gin.Context) {
