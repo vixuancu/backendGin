@@ -3,6 +3,7 @@ package handlerV1
 import (
 	"ginAPI/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
 	"regexp"
 	"time"
@@ -18,11 +19,23 @@ type GetProductsV1Params struct {
 	Email  string `form:"email" binding:"omitempty,email"`
 	Date   string `form:"date" binding:"omitempty,datetime=2006-01-02"`
 }
+type ProductsAttribute struct {
+	AttributeName  string `json:"attribute_name" binding:"required"`
+	AttributeValue string `json:"attribute_value" binding:"required"`
+}
+type ProductInfo struct {
+	InfoKey   string `json:"info_key" binding:"required"`
+	InfoValue string `json:"info_value" binding:"required"`
+}
 type PostProductsParams struct {
-	Name    string        `json:"name" binding:"required,min=2,max=50"`
-	Price   int           `json:"price" binding:"required,gte=0,lte=1000000"` // Price must be a non-negative integer
-	Display *bool         `json:"display" binding:"omitempty"`                // Display must be true or false
-	Image   ProductsImage `json:"image" binding:"required"`                   // dive dùng để validate các trường bên trong struct
+	Name            string                 `json:"name" binding:"required,min=2,max=50"`
+	Price           int                    `json:"price" binding:"required,gte=0,lte=1000000"` // Price must be a non-negative integer
+	Display         *bool                  `json:"display" binding:"omitempty"`                // Display must be true or false
+	Image           ProductsImage          `json:"image" binding:"required"`                   // dive dùng để validate các trường bên trong struct
+	Tags            []string               `json:"tags" binding:"required,min=2,max=20"`
+	Attributes      []ProductsAttribute    `json:"attributes" binding:"required,dive"`   // Attributes must be a slice of ProductsAttribute with required fields
+	Info            map[string]ProductInfo `json:"info" binding:"required,dive"`         // Info must be a map with required fields
+	ProductMetadata map[string]any         `json:"product_metadata" binding:"omitempty"` // ProductMetadata can be any additional metadata, optional
 }
 
 type ProductsImage struct {
@@ -75,16 +88,29 @@ func (u *ProductHandler) PostProducts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
 		return
 	}
+	for key := range params.Info {
+		if _, err := uuid.Parse(key); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"products-ìno": "Key trong product info khong phai là UUID: " + key,
+			})
+			return
+
+		}
+	}
 	if params.Display == nil {
 		defaultDisplay := true // Set default value for Display if not provided
 		params.Display = &defaultDisplay
 	}
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "create a new product V1",
-		"data":    params.Name,
-		"price":   params.Price,
-		"display": params.Display,
-		"image":   params.Image,
+		"message":    "create a new product V1",
+		"data":       params.Name,
+		"price":      params.Price,
+		"display":    params.Display,
+		"image":      params.Image,
+		"tags":       params.Tags,
+		"attributes": params.Attributes,
+		"info":       params.Info,
+		"metadata":   params.ProductMetadata,
 	})
 }
 func (u *ProductHandler) PutProducts(c *gin.Context) {
