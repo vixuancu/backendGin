@@ -109,3 +109,48 @@ func (n *NewsHandler) PostUploadFileNewsV1(c *gin.Context) {
 		"status":  params.Status,
 	})
 }
+func (n *NewsHandler) PostUploadMultipleFileNewsV1(c *gin.Context) {
+	var params PostNewsV1Params
+	if err := c.ShouldBind(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
+		return
+	}
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to parse multipart form",
+		})
+		return
+	}
+	images := form.File["images"]
+	if len(images) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "No images uploaded",
+		})
+		return
+	}
+	var successFiles []string
+	var failFiles []map[string]string
+	for _, image := range images {
+		filename, err := utils.ValidateAndSaveFile(image, "./upload")
+		if err != nil {
+			failFiles = append(failFiles, map[string]string{
+				"filename": image.Filename,
+				"error":    err.Error(),
+			})
+			continue
+		}
+		successFiles = append(successFiles, filename)
+	}
+	resp := gin.H{
+		"message":       "Upload file success",
+		"title":         params.Title,
+		"status":        params.Status,
+		"success_files": successFiles,
+	}
+	if len(failFiles) > 0 {
+		resp["message"] = "Some files failed to upload"
+		resp["fail_files"] = failFiles
+	}
+	c.JSON(200, resp)
+}
