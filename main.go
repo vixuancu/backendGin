@@ -33,8 +33,12 @@ func main() {
 		v1.PUT("/products/:id", productHandler.PutProducts)
 		v1.DELETE("/products/:id", productHandler.DeleteProducts)
 		// category
-		categoryHandlerV1 := handlerV1.NewCategoryHandler()
-		v1.GET("/category/:category", categoryHandlerV1.GetCategoriesV1)
+		category := v1.Group("/category")
+		{
+			categoryHandlerV1 := handlerV1.NewCategoryHandler()
+			category.GET("/:category", categoryHandlerV1.GetCategoriesV1)
+			category.POST("/", categoryHandlerV1.PostCategoriesV1)
+		}
 
 		// new
 
@@ -43,6 +47,7 @@ func main() {
 			newsHandlerV1 := handlerV1.NewNewsHandler()
 			news.GET("/:slug", newsHandlerV1.GetNewsV1)
 			news.GET("/", newsHandlerV1.GetNewsV1)
+			news.POST("/", newsHandlerV1.PostNewsV1)
 		}
 
 	}
