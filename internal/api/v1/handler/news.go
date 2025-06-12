@@ -110,6 +110,7 @@ func (n *NewsHandler) PostUploadFileNewsV1(c *gin.Context) {
 	})
 }
 func (n *NewsHandler) PostUploadMultipleFileNewsV1(c *gin.Context) {
+	const publicUrl = "http://localhost:8080/images/"
 	var params PostNewsV1Params
 	if err := c.ShouldBind(&params); err != nil {
 		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
@@ -140,7 +141,8 @@ func (n *NewsHandler) PostUploadMultipleFileNewsV1(c *gin.Context) {
 			})
 			continue
 		}
-		successFiles = append(successFiles, filename)
+		PublicImageUrl := publicUrl + filename
+		successFiles = append(successFiles, PublicImageUrl)
 	}
 	resp := gin.H{
 		"message":       "Upload file success",

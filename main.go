@@ -66,6 +66,6 @@ func main() {
 		v2.DELETE("/users/:id", userHandlerV2.DeleteUsers)
 
 	}
-
-	r.Run(":8080") // listen and serve on
+	r.StaticFS("/images", gin.Dir("./upload", false)) // Serve static files from the "upload" directory
+	r.Run(":8080")                                    // listen and serve on
 }
