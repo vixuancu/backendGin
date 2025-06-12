@@ -13,7 +13,7 @@ import (
 func main() {
 
 	r := gin.Default()
-
+	go middleware.CleanupClients() // dọn dẹp các client đã hết hạn
 	if err := utils.RegisterValidators(); err != nil {
 		panic("Failed to register custom validators: " + err.Error()) // stop the server if validators cannot be registered
 	}
@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
-	r.Use(middleware.APIKeyMiddleware())
+	r.Use(middleware.APIKeyMiddleware(), middleware.RateLimitMiddleware())
 	//verrsion 1
 	v1 := r.Group("/api/v1")
 	{
