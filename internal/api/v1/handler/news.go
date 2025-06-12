@@ -48,6 +48,12 @@ func (n *NewsHandler) PostNewsV1(c *gin.Context) {
 		})
 		return
 	}
+	if image.Size > 5<<20 { // 5MB
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Image size không được lớn hơn 5MB",
+		})
+		return
+	}
 	// os.ModePerm = 0777
 	// có nghĩa là được phép đọc, ghi và thực thi cho tất cả mọi người
 	err = os.MkdirAll("./upload", os.ModePerm)
@@ -73,5 +79,33 @@ func (n *NewsHandler) PostNewsV1(c *gin.Context) {
 			"image":  image.Filename,
 			"path":   dst,
 		},
+	})
+}
+func (n *NewsHandler) PostUploadFileNewsV1(c *gin.Context) {
+	var params PostNewsV1Params
+	if err := c.ShouldBind(&params); err != nil {
+		c.JSON(http.StatusBadRequest, utils.HandleValidationError(err))
+		return
+	}
+	image, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Image is required",
+		})
+		return
+	}
+	filename, err := utils.ValidateAndSaveFile(image, "./upload")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": fmt.Sprintf("Failed to upload file: %s", err.Error()),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"message": "Upload file success",
+		"image":   filename,
+		"path":    "./upload/" + filename,
+		"title":   params.Title,
+		"status":  params.Status,
 	})
 }
