@@ -3,16 +3,25 @@ package main
 import (
 	handlerV1 "ginAPI/internal/api/v1/handler"
 	handlerV2 "ginAPI/internal/api/v2/handler"
+	"ginAPI/middleware"
 	"ginAPI/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 func main() {
 
 	r := gin.Default()
+
 	if err := utils.RegisterValidators(); err != nil {
 		panic("Failed to register custom validators: " + err.Error()) // stop the server if validators cannot be registered
 	}
+	err := godotenv.Load(".env") // Load environment variables from .env file
+	if err != nil {
+		log.Println("Error loading .env file")
+	}
+	r.Use(middleware.APIKeyMiddleware())
 	//verrsion 1
 	v1 := r.Group("/api/v1")
 	{
