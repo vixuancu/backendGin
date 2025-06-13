@@ -21,7 +21,7 @@ func main() {
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
-	r.Use(middleware.APIKeyMiddleware(), middleware.RateLimitMiddleware())
+	r.Use(middleware.LoggerMiddleware(), middleware.APIKeyMiddleware(), middleware.RateLimitMiddleware())
 	//verrsion 1
 	v1 := r.Group("/api/v1")
 	{

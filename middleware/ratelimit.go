@@ -75,6 +75,7 @@ func RateLimitMiddleware() gin.HandlerFunc {
 				"error":   "Too many requests, please try again later",
 				"message": "Bạn đã gửi quá nhiều yêu cầu, vui lòng thử lại sau",
 			})
+			return
 		}
 		c.Next() // Call the next handler in the chain
 	}
