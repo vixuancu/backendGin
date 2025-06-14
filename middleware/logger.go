@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -27,21 +26,16 @@ func (w *CustomResponseWriter) Write(data []byte) (n int, err error) {
 func LoggerMiddleware() gin.HandlerFunc {
 	// nơi chứa log request
 	logPath := "logs/htttp.log"
-	// Tạo thư mục cha nếu chưa tồn tại
-	if err := os.MkdirAll(filepath.Dir(logPath), os.ModePerm); err != nil {
-		panic(err)
-	}
-	//os.O_APPEND: Ghi dữ liệu vào cuối file (append mode).
-	//
-	//os.O_CREATE: Nếu file chưa tồn tại, nó sẽ được tạo mới.
-	//
-	//	os.O_WRONLY: Mở file ở chế độ chỉ ghi (write-only).
-	logFile, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
+
 	// Tạo logger với zerolog
-	logger := zerolog.New(logFile).With().Timestamp().Logger()
+	logger := zerolog.New(&lumberjack.Logger{
+		Filename:   logPath,
+		MaxSize:    1, // megabytes
+		MaxBackups: 5,
+		MaxAge:     5,    //
+		Compress:   true, // disabled by default
+		LocalTime:  true, //
+	}).With().Timestamp().Logger()
 	return func(c *gin.Context) {
 		start := time.Now()
 		// Đọc toàn bộ body của request để ghi log

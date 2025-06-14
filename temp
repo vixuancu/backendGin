@@ -1,1 +1,1 @@
-PostProductsParams.Attributes[1].AttributeName
+// test:ab -n 2000 -c 1 -H "X-API-KEY:87f2f6bd-8095-44d4-9295-547136178207" http://localhost:8080/api/v1/category/golang
