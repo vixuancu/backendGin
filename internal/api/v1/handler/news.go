@@ -22,19 +22,19 @@ type PostNewsV1Params struct {
 }
 
 func (n *NewsHandler) GetNewsV1(c *gin.Context) {
-	slug := c.Param("slug")
-	if slug == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "List all news V1",
-			"slug":    "No news",
-		})
-	} else {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "List all news V1",
-			"slug":    slug,
-		})
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "List all news V1",
+	})
 }
+
+func (n *NewsHandler) GetNewsBySlugV1(c *gin.Context) {
+	slug := c.Param("slug")
+	c.JSON(http.StatusOK, gin.H{
+		"message": "News details V1",
+		"slug":    slug,
+	})
+}
+
 func (n *NewsHandler) PostNewsV1(c *gin.Context) {
 	var params PostNewsV1Params
 	if err := c.ShouldBind(&params); err != nil {
