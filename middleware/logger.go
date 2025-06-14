@@ -14,6 +14,16 @@ import (
 	"time"
 )
 
+type CustomResponseWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w *CustomResponseWriter) Write(data []byte) (n int, err error) {
+	w.body.Write(data)
+	return w.ResponseWriter.Write(data)
+}
+
 func LoggerMiddleware() gin.HandlerFunc {
 	// nơi chứa log request
 	logPath := "logs/htttp.log"
@@ -90,11 +100,28 @@ func LoggerMiddleware() gin.HandlerFunc {
 				}
 			}
 		}
-
+		customeWriter := &CustomResponseWriter{
+			ResponseWriter: c.Writer,
+			body:           bytes.NewBufferString(""),
+		}
+		c.Writer = customeWriter // Thay thế ResponseWriter của gin bằng CustomResponseWriter
 		c.Next()
 		// Tính toán thời gian xử lý request
 		duration := time.Since(start)
 		statusCode := c.Writer.Status()
+		responseContentType := c.Writer.Header().Get("Content-Type")
+		responseBodyRaw := customeWriter.body.String()
+		var responseBodyParsed interface{}
+		if strings.HasPrefix(responseContentType, "image") {
+			//
+			responseBodyParsed = "[binary image data]"
+		} else if strings.HasPrefix(responseContentType, "application/json") || strings.HasPrefix(strings.TrimSpace(responseBodyRaw), "{") || strings.HasPrefix(strings.TrimSpace(responseBodyRaw), "[") {
+			if err := json.Unmarshal([]byte(responseBodyRaw), &responseBodyParsed); err != nil {
+				responseBodyParsed = responseBodyRaw
+			}
+		} else {
+			responseBodyParsed = responseBodyRaw
+		}
 		logEvent := logger.Info() // Mặc định ghi log ở mức Info
 		if statusCode >= 500 {
 			// Nếu mã trạng thái là 500 trở lên, ghi log ở mức Error
@@ -121,6 +148,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 			Int64("content_length", c.Request.ContentLength). // Ghi độ dài của nội dung request  (nếu có)
 			Interface("headers", c.Request.Header). // Ghi tất cả các header của request
 			Interface("request_body", requestBody).
+			Interface("response_body", responseBodyParsed).
 			Int("status_code", statusCode). // Ghi mã trạng thái HTTP của response (ví dụ: 200, 404, 500, v.v.)
 			Int64("duration_ms", duration.Milliseconds()). // Ghi thời gian xử lý request tính bằng mili giây
 
